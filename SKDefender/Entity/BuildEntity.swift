@@ -28,7 +28,7 @@ class BuildEntity: GKEntity {
 //        addComponent(spriteComponent)
         
         let spriteNode = buildComponent.node
-        spriteNode.anchorPoint = CGPoint(x: 0.0, y: -1.33)
+        spriteNode.anchorPoint = CGPoint(x: 0.0, y: -1.0)
         let texSize = texture.size()
         spriteNode.position = CGPoint(x: CGFloat(i) * texSize.width, y: playableStart)
         spriteNode.name = "foreground"

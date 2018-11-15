@@ -33,15 +33,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
     
     let player = PlayerEntity(imageName: "starship")
     var alien:AlienEntity!
+    var hud: SKNode!
     
     var playableStart: CGFloat = 0
     
     var deltaTime: TimeInterval = 0
     var lastUpdateTimeInterval: TimeInterval = 0
     
-    let numberOfForegrounds = 4
+    let numberOfForegrounds = 6
     var groundSpeed:Double = 150
     var brakeSpeed:Double = 0.1
+    var cameraScale:CGFloat = 1
+    var cameraMove = 512
     
     lazy var screenWidth = view!.bounds.width
     lazy var screenHeight = view!.bounds.height
@@ -77,7 +80,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
     
     var aliens:[GKEntity] = []
     var foregrounds:[EntityNode] = []
-    var colours = [UIColor.red, UIColor.blue, UIColor.green, UIColor.purple]
+    var colours = [UIColor.red, UIColor.white, UIColor.green, UIColor.yellow, UIColor.purple, UIColor.blue, UIColor.magenta, UIColor.orange, UIColor.cyan]
     
     func setupForeground() {
         
@@ -132,40 +135,67 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
     
     var moveAmount: CGPoint!
     var foregroundCGPoint: CGFloat!
+   
+    
+    
+//    func updateForegroundLeft() {
+//        self.enumerateChildNodes(withName: "foreground") { (node, stop) in
+//            if let foreground = node as? SKSpriteNode {
+//                self.moveAmount = CGPoint(x: -CGFloat(self.groundSpeed) * CGFloat(self.deltaTime), y: self.playableStart)
+//                foreground.position.x += self.moveAmount.x
+//                self.foregroundCGPoint = foreground.position.x
+//
+//                if foreground.position.x < -foreground.size.width {
+//                    foreground.position.x += foreground.size.width * CGFloat(self.numberOfForegrounds)
+//                }
+//            }
+//        }
+//    }
     
     func updateForegroundLeft() {
-        self.enumerateChildNodes(withName: "foreground") { (node, stop) in
-            if let foreground = node as? SKSpriteNode {
-                self.moveAmount = CGPoint(x: -CGFloat(self.groundSpeed) * CGFloat(self.deltaTime), y: self.playableStart)
-                foreground.position.x += self.moveAmount.x
-                self.foregroundCGPoint = foreground.position.x
-                
-                if foreground.position.x < -foreground.size.width {
-                    foreground.position.x += foreground.size.width * CGFloat(self.numberOfForegrounds)
-                }
+        playerNode.physicsBody?.applyForce(CGVector(dx: 48, dy: 0))
+        for foreground in foregrounds {
+            let dx = foreground.position.x - cameraNode.position.x
+            if dx < -(foreground.size.width * CGFloat(numberOfForegrounds/2) + size.width / 2) {
+                foreground.position.x += foreground.size.width * CGFloat(numberOfForegrounds)
+                print("switch left")
             }
         }
     }
     
+    // fucked
+    
     func updateForegroundRight() {
-        self.enumerateChildNodes(withName: "foreground") { (node, stop) in
-            if let foreground = node as? SKSpriteNode {
-                self.moveAmount = CGPoint(x: -CGFloat(self.groundSpeed) * CGFloat(self.deltaTime), y: self.playableStart)
-                foreground.position.x -= self.moveAmount.x
-                self.foregroundCGPoint = foreground.position.x
-                
-                if foreground.position.x > foreground.size.width {
-                    foreground.position.x -= foreground.size.width * CGFloat(self.numberOfForegrounds)
-                }
+        playerNode.physicsBody?.applyForce(CGVector(dx: -48, dy: 0))
+        for foreground in foregrounds {
+            let zx = foreground.size.width + cameraNode.position.x
+            if zx < foreground.position.x {
+                foreground.position.x -= foreground.size.width * CGFloat(numberOfForegrounds)
+                print("switch right")
             }
         }
     }
+    
+//    func updateForegroundRight() {
+//        self.enumerateChildNodes(withName: "foreground") { (node, stop) in
+//            if let foreground = node as? SKSpriteNode {
+//                self.moveAmount = CGPoint(x: -CGFloat(self.groundSpeed) * CGFloat(self.deltaTime), y: self.playableStart)
+//                foreground.position.x -= self.moveAmount.x
+//                self.foregroundCGPoint = foreground.position.x
+//
+//                if foreground.position.x > foreground.size.width {
+//                    foreground.position.x -= foreground.size.width * CGFloat(self.numberOfForegrounds)
+//                }
+//            }
+//        }
+//    }
     
     
     
     var playerNode: EntityNode!
 //    var advanceArrow: TouchableSprite!
     var advancedArrow: HeadsUpEntity!
+    var zoomButton: HeadsUpEntity!
     
     func setupPlayer(){
         playerNode = player.spriteComponent.node
@@ -184,26 +214,36 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
         let downArrow = HeadsUpEntity(imageName: "DownArrow", xCord: (self.view?.bounds.minX)! + 128, yCord: ((self.view?.bounds.maxY)!) - 96, name: "down")
         downArrow.hudComponent.node.delegate = self
         
-        advancedArrow = HeadsUpEntity(imageName: "RightArrow", xCord: ((self.view?.bounds.maxX)! * 2) - 128, yCord: ((self.view?.bounds.maxY)!) - 96, name: "advance")
+        advancedArrow = HeadsUpEntity(imageName: "RightArrow", xCord: ((self.view?.bounds.maxX)!) - 128, yCord: ((self.view?.bounds.maxY)!) - 96, name: "advance")
         advancedArrow.hudComponent.node.delegate = self
         
         let stopSquare = HeadsUpEntity(imageName: "Square", xCord: (self.view?.bounds.minX)! + 128, yCord: ((self.view?.bounds.maxY)!), name: "square")
         stopSquare.hudComponent.node.delegate = self
         
-        let fireSquare = HeadsUpEntity(imageName: "Square", xCord: ((self.view?.bounds.maxX)! * 2) - 128, yCord: ((self.view?.bounds.maxY)!), name: "fire")
+//        let fireSquare = HeadsUpEntity(imageName: "Square", xCord: ((self.view?.bounds.maxX)! * 2) - 128, yCord: ((self.view?.bounds.maxY)!), name: "fire")
+        let fireSquare = HeadsUpEntity(imageName: "Square", xCord: ((self.view?.bounds.maxX)!) - 128, yCord: ((self.view?.bounds.maxY)!), name: "fire")
         fireSquare.hudComponent.node.delegate = self
         
-        let flipButton = HeadsUpEntity(imageName: "SwiftLogo", xCord: ((self.view?.bounds.maxX)! * 2) - 128, yCord: ((self.view?.bounds.maxY)!) + 96, name: "flip")
+        let flipButton = HeadsUpEntity(imageName: "SwiftLogo", xCord: ((self.view?.bounds.maxX)!) - 128, yCord: ((self.view?.bounds.maxY)!) + 96, name: "flip")
         flipButton.hudComponent.node.delegate = self
         
+        hud = SKNode()
+        hud.position = CGPoint(x: -(self.view?.bounds.maxX)!, y: -(self.view?.bounds.maxY)! / 2)
+        playerNode.addChild(hud)
         
-        addChild(upArrow.hudComponent.node)
-        addChild(downArrow.hudComponent.node)
-        addChild(stopSquare.hudComponent.node)
-        addChild(advancedArrow.hudComponent.node)
+        
+        hud.addChild(upArrow.hudComponent.node)
+        hud.addChild(downArrow.hudComponent.node)
+        hud.addChild(stopSquare.hudComponent.node)
+        hud.addChild(advancedArrow.hudComponent.node)
 
-        addChild(fireSquare.hudComponent.node)
-        addChild(flipButton.hudComponent.node)
+        hud.addChild(fireSquare.hudComponent.node)
+        hud.addChild(flipButton.hudComponent.node)
+        
+        zoomButton = HeadsUpEntity(imageName: "Zoom", xCord: 0, yCord: self.view!.bounds.maxY - 128, name: "zoom")
+        zoomButton.hudComponent.node.delegate = self
+        
+        hud.addChild(zoomButton.hudComponent.node)
         
         
     }
@@ -220,13 +260,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
         cameraNode = SKCameraNode()
         cameraNode.position = CGPoint(x: self.view!.bounds.maxX, y: self.view!.bounds.maxY)
         scene?.camera = cameraNode
-        
-        cameraNode.setScale(2)
-        
+
+        cameraNode.setScale(1)
+
         addChild(cameraNode)
         
         setupForeground()
         setupPlayer()
+        cameraNode.position = CGPoint(x: self.view!.bounds.maxX, y: self.view!.bounds.maxY)
+        
         
 //        Add a boundry to the screen
         let rectToSecure = CGRect(x: 0, y: 0, width: self.view!.bounds.maxX * 2, height: self.view!.bounds.minX * 2)
@@ -257,6 +299,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
         for alien in aliens {
             alien.update(deltaTime: deltaTime)
         }
+        
+        camera?.position.x = playerNode.position.x
         
     }
     
@@ -388,13 +432,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
     func spriteTouched(box: TouchableSprite) {
         switch box.name {
         case "starship":
-            print("groundSpeed \(groundSpeed)")
+            print("cameraNode fucked \(playerNode.position)")
         case "spaceman":
             print("cords \(box.position) \(moveAmount)")
         case "up":
-            player.movementComponent.applyImpulseUp(lastUpdateTimeInterval)
+//            let dontMove = hud.convert(position, to: playerNode)
+
+//            player.movementComponent.applyImpulseUp(lastUpdateTimeInterval)
+            playerNode.run(SKAction.move(by: CGVector(dx: 0, dy: 136), duration: 0.5))
+            hud.run(SKAction.move(by: CGVector(dx: 0, dy: -136), duration: 0))
+
+//            hud.position = dontMove
         case "down":
-            player.movementComponent.applyImpulseDown(lastUpdateTimeInterval)
+//            let dontMove = hud.convert(position, to: playerNode)
+//            player.movementComponent.applyImpulseDown(lastUpdateTimeInterval)
+            playerNode.run(SKAction.move(by: CGVector(dx: 0, dy: -136), duration: 0.5))
+            hud.run(SKAction.move(by: CGVector(dx: 0, dy: 136), duration: 0))
+//            hud.position = dontMove
         case "advance":
             let direct = playerNode.userData?.object(forKey: "direction") as? String
             if previousDirection == nil || previousDirection != direct {
@@ -409,11 +463,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
             case "left":
                 moveRight = true
                 moveLeft = false
-                player.movementComponent.applyImpulseX(lastUpdateTimeInterval)
+//                player.movementComponent.applyImpulseX(lastUpdateTimeInterval)
+                cameraMove = -512
             case "right":
                 moveRight = false
                 moveLeft = true
-                player.movementComponent.applyImpulseX(lastUpdateTimeInterval)
+//                player.movementComponent.applyImpulseX(lastUpdateTimeInterval)
+                cameraMove = 512
             default:
                 break
             }
@@ -429,12 +485,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
                 moveLeft = true
                 moveRight = false
                 player.movementComponent.applyImpulseLeft(lastUpdateTimeInterval)
+//                cameraMove = 512
+//                cameraNode.run(SKAction.move(by: CGVector(dx: 512, dy: 0), duration: 2))
             case "right":
                 advancedArrow.hudComponent.changeTexture(imageNamed: "LeftArrow")
                 moveRight = true
                 moveLeft = false
                 player.movementComponent.applyImpulseRight(lastUpdateTimeInterval)
-                
+//                cameraMove = -512
+//                cameraNode.run(SKAction.move(by: CGVector(dx: -512, dy: 0), duration: 2))
             default:
                 break
             }
@@ -455,6 +514,22 @@ class GameScene: SKScene, SKPhysicsContactDelegate, touchMe {
             default:
                 break
             }
+        case "zoom":
+            cameraScale += 1
+            
+            if cameraScale > 4 {
+                let calc:CGFloat = (((1/2)/3)/4)
+                cameraNode.run(SKAction.scale(by: calc, duration: 2))
+                zoomButton.hudComponent.node.run(SKAction.scale(by: calc, duration: 2))
+                cameraScale = 1
+            } else {
+                
+                cameraNode.run(SKAction.scale(by: cameraScale, duration: 2))
+                zoomButton.hudComponent.node.run(SKAction.scale(by: cameraScale, duration: 2))
+            }
+            print("camera Scale \(cameraScale)")
+        
+            
         default:
             moreBreak()
         }
